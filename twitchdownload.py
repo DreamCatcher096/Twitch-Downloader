@@ -15,7 +15,7 @@ def get_link(id, file_name, output):
     for line in open(os.path.join(output, 'chunks.txt'), 'rb'):
         temppath = output + r'\temp'
         num += 1
-        if num % 32 == id:
+        if num % 16 == id:
             tempname = file_name.replace('.', ('_' + str(num) + '.'))
             if not os.path.exists(os.path.join(temppath, tempname)):
                 link = line
@@ -76,12 +76,7 @@ if __name__ == '__main__':
     url = "https://www.twitch.tv/a_seagull/v/" + VOD_id
     start = 0
     end = sys.maxint
-    output = r"E:\twitch\a_seagull"
-    temppath = output + r'\temp'
-    if not os.path.exists(output):
-        os.makedirs(output)
-    if not os.path.exists(temppath):
-        os.makedirs(temppath)
+    output = r"E:\twitch"
 
     # headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5)\
     #                              AppleWebKit 537.36 (KHTML, like Gecko) Chrome", \
@@ -126,7 +121,14 @@ if __name__ == '__main__':
     subdomain = match.get("subdomain")
     video_type = match.get("video_type")
     video_id = match.get("video_id")
-
+    
+    output += r'\' + channel
+    temppath = output + r'\temp'
+    if not os.path.exists(output):
+        os.makedirs(output)
+    if not os.path.exists(temppath):
+        os.makedirs(temppath)
+        
     name = '%s_%s.mp4' % (channel, video_id)
     prog_name = os.path.join(output, ('progress_' + VOD_id + '.txt'))
     transport_stream_file_name = name.replace('.mp4', '.ts')
@@ -204,7 +206,7 @@ if __name__ == '__main__':
         # progress_status = multiprocessing.Array('int', len(progress), progress, lock=True)
         completed_num = multiprocessing.Value('d', 0.0)
         completed_num.value = float(completed)
-        multi_num = 32
+        multi_num = 16
 
         process = []
         for i in range(multi_num):
