@@ -8,7 +8,7 @@ Probably will add a function to covert the .ts file to .mp4 file, and add a prog
 
 Variable names are a mess, I will make it better later.
 
-Bug: sometimes some subprocess will hang for a while, currently to solve it you need to stop the program and delete the unfinished files and start it again, it will be solved in future updates.
+Bug: sometimes some subprocess will hang for a while, currently to solve it you need to stop the program and delete the unfinished files and start it again, this will be solved in future updates.
 
 Requires:
 - [cement](https://pypi.python.org/pypi/cement/2.4.0)
