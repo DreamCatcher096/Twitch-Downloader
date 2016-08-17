@@ -13,7 +13,6 @@ Variable names are a mess, I will make it better later.
 Bug: sometimes some subprocess will hang for a while, currently to solve it you need to stop the program and delete the unfinished files and start it again, this will be solved in future updates.
 
 Requires:
-- [cement](https://pypi.python.org/pypi/cement/2.4.0)
 - [m3u8](https://github.com/ilyalissoboi/m3u8)
 - [requests](https://pypi.python.org/pypi/requests)
 - [pycurl](https://pypi.python.org/pypi/pycurl/)
