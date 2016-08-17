@@ -72,11 +72,12 @@ def download_progress(id, file_name, output, completed_num, count):
 if __name__ == '__main__':
     count = 0
     completed = 0
-    VOD_id = raw_input("Enter Twitch Video ID: ")
-    url = "https://www.twitch.tv/a_seagull/v/" + VOD_id
+    # VOD_id = raw_input("Enter Twitch Video ID: ")
+    url = raw_input("Enter Twitch Video URL: ")
     start = 0
     end = sys.maxint
-    output = r"E:\twitch"
+    # output = r"E:\twitch"
+    output = raw_input("Enter the output directory: ")
 
     # headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5)\
     #                              AppleWebKit 537.36 (KHTML, like Gecko) Chrome", \
@@ -130,7 +131,7 @@ if __name__ == '__main__':
         os.makedirs(temppath)
         
     name = '%s_%s.mp4' % (channel, video_id)
-    prog_name = os.path.join(output, ('progress_' + VOD_id + '.txt'))
+    prog_name = os.path.join(output, ('progress_' + video_id + '.txt'))
     transport_stream_file_name = name.replace('.mp4', '.ts')
     if video_type == 'v':
         if not os.path.exists(prog_name):
