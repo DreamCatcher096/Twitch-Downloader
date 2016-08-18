@@ -233,7 +233,7 @@ if __name__ == '__main__':
             temp = video_parts[i].split('_')[-1]
             temp = temp.split('.')[0]
             temp = int(temp)
-            video_parts_ordered[temp] = video_parts[i]
+            video_parts_ordered[temp - 1] = video_parts[i]
 
         for files in video_parts_ordered:
             with open(os.path.join(output + r'\temp', files), 'rb') as video_part:
