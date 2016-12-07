@@ -11,11 +11,12 @@ from random import random
 def get_link(id, file_name, output):
     link = ""
     num = 0
-
-    for line in open(os.path.join(output, 'chunks.txt'), 'rb'):
+    file_name_parts = file_name.split('_')
+    vod_id = file_name_parts[-1].split('.')[0]
+    for line in open(os.path.join(output, ('chunks_' + vod_id + '.txt')), 'rb'):
         temppath = output + r'\temp'
         num += 1
-        if num % 16 == id:
+        if num % 32 == id:
             tempname = file_name.replace('.', ('_' + str(num) + '.'))
             if not os.path.exists(os.path.join(temppath, tempname)):
                 link = line
@@ -23,9 +24,12 @@ def get_link(id, file_name, output):
     return (link.split('\n')[0], num)
 
 
-def update_progress(lock, completed_num):
+def update_progress(lock, completed_num):  # , link, flag, output, tempname):
     lock.acquire()
     completed_num.value += 1
+    # if flag == 0:
+    #    with open(os.path.join(output, ('fails.txt')), 'ab+') as fails:
+    #        fails.write("%s\n" % (link + ' ' + tempname))
     lock.release()
 
 
@@ -52,20 +56,32 @@ def download_progress(id, file_name, output, completed_num, count):
         curl.setopt(pycurl.WRITEDATA, part)
         curl.setopt(pycurl.FOLLOWLOCATION, True)
         curl.setopt(pycurl.URL, link)
+        curl.setopt(pycurl.SSL_VERIFYPEER, False)
+        curl.setopt(pycurl.SSL_VERIFYHOST, False)
         curl.setopt(pycurl.HTTPHEADER, headers)
-        try:
-            curl.perform()
-        except Exception, e:
-            url_error += 1
-            print "urlerror " + str(url_error)
-            print e
-            # import traceback
-            #
-            # traceback.print_exc(file=sys.stdout)
-            # raise e
+        curl.setopt(pycurl.TIMEOUT, 600)
+        while True:
+            try:
+                curl.perform()
+            except Exception, e:
+                url_error += 1
+                print "urlerror " + str(url_error)
+                print "error on: " + str(num)
+                print e
+                # curl.close()
+                # part.close()
+                # update_progress(lock, completed_num, link, 0, output, tempname)
+                # print "%f%% jumped" % ((completed_num.value / count) * 100)
+                # break
+                # import traceback
+                #
+                # traceback.print_exc(file=sys.stdout)
+                # raise e
+            else:
+                break
         curl.close()
         part.close()
-        update_progress(lock, completed_num)
+        update_progress(lock, completed_num)  # , link, 1, output, tempname)
         print "%f%%" % ((completed_num.value / count) * 100)
 
 
@@ -73,11 +89,16 @@ if __name__ == '__main__':
     count = 0
     completed = 0
     # VOD_id = raw_input("Enter Twitch Video ID: ")
-    url = raw_input("Enter Twitch Video URL: ")
+    # url = "https://www.twitch.tv/a_seagull/v/" + VOD_id
+    url = raw_input("Enter Url: ")
     start = 0
     end = sys.maxint
-    # output = r"E:\twitch"
-    output = raw_input("Enter the output directory: ")
+    output = r"E:\twitch\a_seagull"
+    temppath = output + r'\temp'
+    if not os.path.exists(output):
+        os.makedirs(output)
+    if not os.path.exists(temppath):
+        os.makedirs(temppath)
 
     # headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5)\
     #                              AppleWebKit 537.36 (KHTML, like Gecko) Chrome", \
@@ -97,7 +118,7 @@ if __name__ == '__main__':
     # new API specific variables
     _chunk_re = "(.+\.ts)\?start_offset=(\d+)&end_offset=(\d+)"
     _simple_chunk_re = "(.+\.ts)"
-    _vod_api_url = "https://api.twitch.tv/api/vods/{}/access_token"
+    _vod_api_url = "https://api.twitch.tv/api/vods/{}/access_token?adblock=true&need_https=true&platform=web&player_type=site&oauth_token=7seonif5w3sivvaqdbd8trawssjzmr"  # https://api.twitch.tv/api/vods/89333620/access_token?adblock=true&need_https=true&platform=web&player_type=site&oauth_token=7seonif5w3sivvaqdbd8trawssjzmr
     _index_api_url = "http://usher.ttvnw.net/vod/{}"
 
     _url_re = re.compile(r"""
@@ -122,14 +143,7 @@ if __name__ == '__main__':
     subdomain = match.get("subdomain")
     video_type = match.get("video_type")
     video_id = match.get("video_id")
-    
-    output += r'\' + channel
-    temppath = output + r'\temp'
-    if not os.path.exists(output):
-        os.makedirs(output)
-    if not os.path.exists(temppath):
-        os.makedirs(temppath)
-        
+
     name = '%s_%s.mp4' % (channel, video_id)
     prog_name = os.path.join(output, ('progress_' + video_id + '.txt'))
     transport_stream_file_name = name.replace('.mp4', '.ts')
@@ -180,7 +194,7 @@ if __name__ == '__main__':
 
             # download clip chunks and merge into single file
             count = 0
-            with open(os.path.join(output, 'chunks.txt'), 'wb+') as cf:
+            with open(os.path.join(output, ('chunks_' + video_id + '.txt')), 'wb+') as cf:
                 for c in chunks:
                     video_url = "{}?start_offset={}&end_offset={}".format(*c)
                     cf.write('%s\n' % video_url)
@@ -207,7 +221,7 @@ if __name__ == '__main__':
         # progress_status = multiprocessing.Array('int', len(progress), progress, lock=True)
         completed_num = multiprocessing.Value('d', 0.0)
         completed_num.value = float(completed)
-        multi_num = 16
+        multi_num = 32
 
         process = []
         for i in range(multi_num):
@@ -231,9 +245,11 @@ if __name__ == '__main__':
 
         for i in range(len(video_parts)):
             temp = video_parts[i].split('_')[-1]
+            temp2 = video_parts[i].split('_')[-2]
             temp = temp.split('.')[0]
             temp = int(temp)
-            video_parts_ordered[temp - 1] = video_parts[i]
+            if temp2 == video_id:
+                video_parts_ordered[temp - 1] = video_parts[i]
 
         for files in video_parts_ordered:
             with open(os.path.join(output + r'\temp', files), 'rb') as video_part:
